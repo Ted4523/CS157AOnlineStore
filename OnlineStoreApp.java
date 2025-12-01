@@ -24,6 +24,8 @@ public class OnlineStoreApp {
                 case 5 -> updateProductPrice();     // UPDATE on Product
                 case 6 -> viewOrders();             // SELECT on Orders (3rd table)
                 case 7 -> placeOrderTransactional();
+                case 8 -> viewOrderSummary();       // VIEW for reporting
+                case 9 -> addOrderItem();           // STORED PROCEDURE for task automation
                 case 0 -> running = false;
                 default -> System.out.println("Invalid choice. Try again.");
             }
@@ -40,6 +42,8 @@ public class OnlineStoreApp {
         System.out.println("5. Update Product Price (UPDATE)");
         System.out.println("6. View Orders (SELECT)");
         System.out.println("7. Place Order (Transaction: COMMIT/ROLLBACK)");
+        System.out.println("8. View Order Items Report (VIEW)");
+        System.out.println("9. Add Order Item (STORED PROCEDURE)");
         System.out.println("0. Exit");
     }
 
@@ -359,4 +363,48 @@ public class OnlineStoreApp {
             }
         }
     }
+
+    private void viewOrderSummary() {
+        String sql = "SELECT OrderID, CustomerName, TotalItems, TotalAmount FROM order_summary";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            System.out.println("\n-- Order Items Report --");
+            while (rs.next()) {
+                System.out.printf("order %d | customer=%s | items=%d | total=$%s%n",
+                        rs.getInt("OrderID"),
+                        rs.getString("CustomerName"),
+                        rs.getInt("TotalItems"),
+                        rs.getBigDecimal("TotalAmount"));
+            }
+
+        } catch (SQLException e) {
+            handleSqlError("Error selecting from view order_summary", e);
+        }
+    }
+
+    private void addOrderItem() {
+        int orderId = readInt("Order ID: ");
+        int productId = readInt("Product ID: ");
+        int qty = readInt("Quantity: ");
+
+        String sql = "CALL add_order_item(?, ?, ?)";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, orderId);
+            ps.setInt(2, productId);
+            ps.setInt(3, qty);
+
+            ps.execute();
+            System.out.println("Stored procedure executed successfully.");
+
+        } catch (SQLException e) {
+            handleSqlError("Error calling stored procedure add_order_item", e);
+        }
+    }
+
 }
