@@ -25,10 +25,13 @@ public class OnlineStoreApp {
                 case 6 -> viewOrders();             // SELECT on Orders (3rd table)
                 case 7 -> placeOrderTransactional();
                 case 8 -> viewOrderSummary();       // VIEW for reporting
-                case 9 -> addOrderItem();           // STORED PROCEDURE for task automation
+                case 9 -> addOrderItem();           // STORED PROCEDURE
+                case 10 -> deleteOrder();           // DELETE on Orders
                 case 0 -> running = false;
                 default -> System.out.println("Invalid choice. Try again.");
             }
+            
+            
         }
         System.out.println("Goodbye!");
     }
@@ -44,8 +47,11 @@ public class OnlineStoreApp {
         System.out.println("7. Place Order (Transaction: COMMIT/ROLLBACK)");
         System.out.println("8. View Order Items Report (VIEW)");
         System.out.println("9. Add Order Item (STORED PROCEDURE)");
+        System.out.println("10. Delete Order (DELETE)");
         System.out.println("0. Exit");
     }
+    
+    
 
 
     private int readInt(String prompt) {
@@ -407,4 +413,28 @@ public class OnlineStoreApp {
         }
     }
 
+    private void deleteOrder() {
+        int orderId = readInt("Order ID to delete: ");
+    
+        String sql = "DELETE FROM Orders WHERE OrderID = ?";
+    
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+    
+            ps.setInt(1, orderId);
+    
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                System.out.println("No order found with ID " + orderId);
+            } else {
+                System.out.println(
+                    "Deleted order " + orderId
+                );
+            }
+    
+        } catch (SQLException e) {
+            handleSqlError("Error deleting order", e);
+        }
+    }
+    
 }
